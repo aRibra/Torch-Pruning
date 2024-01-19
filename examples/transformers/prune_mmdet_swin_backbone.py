@@ -171,7 +171,7 @@ for m in model.modules():
 
 for m in model.modules():
     if isinstance(m, WindowMSA):
-        print(m.scale, m.embed_dims)
+        print("new embed dim: ", m.embed_dims)
 
 example_inputs = torch.randn([1, 3, 800, 1333])
 
