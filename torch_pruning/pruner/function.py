@@ -486,6 +486,7 @@ class MultiheadAttentionPruner(BasePruningFunc):
     def get_in_channels(self, layer):
         return self.get_out_channels(layer)
 
+# all registered pruners
 PrunerBox = {
     ops.OPTYPE.CONV: ConvPruner(),
     ops.OPTYPE.LINEAR: LinearPruner(),

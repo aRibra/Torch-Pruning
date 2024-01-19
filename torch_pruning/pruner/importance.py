@@ -150,10 +150,12 @@ class GroupNormImportance(Importance):
         # Iterate over all groups and estimate group importance
         for i, (dep, idxs) in enumerate(group):
             layer = dep.layer
+
             prune_fn = dep.pruning_fn
             root_idxs = group[i].root_idxs
             if not isinstance(layer, tuple(self.target_types)):
                 continue
+
             ####################
             # Conv/Linear Output
             ####################
@@ -161,6 +163,9 @@ class GroupNormImportance(Importance):
                 function.prune_conv_out_channels,
                 function.prune_linear_out_channels,
             ]:
+                
+                print("Conv/Linear Output GroupNormImportance() / layer Type = ", type(layer))
+
                 if hasattr(layer, "transposed") and layer.transposed:
                     w = layer.weight.data.transpose(1, 0)[idxs].flatten(1)
                 else:
@@ -190,6 +195,11 @@ class GroupNormImportance(Importance):
                 # repeat importance for group convolutions
                 if prune_fn == function.prune_conv_in_channels and layer.groups != layer.in_channels and layer.groups != 1:
                     local_imp = local_imp.repeat(layer.groups)
+                
+                print("local_imp len = ", len(local_imp), local_imp.shape)
+                print("i = ", i)
+                print(type(layer), idxs, layer)
+                print()
                 
                 local_imp = local_imp[idxs]
                 group_imp.append(local_imp)

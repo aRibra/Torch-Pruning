@@ -11,23 +11,35 @@ from transformers.models.swin.modeling_swin import SwinSelfAttention, SwinPatchM
 class SwinPatchMergingPruner(tp.BasePruningFunc):
 
     def prune_out_channels(self, layer: nn.Module, idxs: list):
+        print("PatchMergingPruner () prune_out_channels/ ", layer.reduction.out_features, type(layer))
         tp.prune_linear_out_channels(layer.reduction, idxs)
         return layer
 
     def prune_in_channels(self, layer: nn.Module, idxs: Sequence[int]) -> nn.Module:
+        print("PatchMergingPruner () prune_in_channels/ ", layer.dim, type(layer))
         dim = layer.dim
+        
+        print("PatchMergingPruner () prune_in_channels/ dim = ", dim)
+        
+        print("len indx = ", len(idxs))
+
         idxs_repeated = idxs + \
             [i+dim for i in idxs] + \
             [i+2*dim for i in idxs] + \
             [i+3*dim for i in idxs]
+
+        print("idxs_repeated = ", len(idxs_repeated))
+
         tp.prune_linear_in_channels(layer.reduction, idxs_repeated)
         tp.prune_layernorm_out_channels(layer.norm, idxs_repeated)
         return layer
 
     def get_out_channels(self, layer):
+        print("PatchMergingPruner () get_out_channels/ ", layer.reduction.out_features, type(layer))
         return layer.reduction.out_features
 
     def get_in_channels(self, layer):
+        print("PatchMergingPruner () get_in_channels/ ", layer.dim, type(layer))
         return layer.dim
 
 url = "http://images.cocodataset.org/val2017/000000039769.jpg"
@@ -35,28 +47,51 @@ image = Image.open(requests.get(url, stream=True).raw)
 
 processor = AutoImageProcessor.from_pretrained("microsoft/swin-tiny-patch4-window7-224")
 model = AutoModelForImageClassification.from_pretrained("microsoft/swin-tiny-patch4-window7-224")
+model = model.swin
 
 example_inputs = processor(images=image, return_tensors="pt")["pixel_values"]
 inputs = processor(images=image, return_tensors="pt")
-outputs = model(**inputs)
-logits = outputs.logits
-# model predicts one of the 1000 ImageNet classes
-predicted_class_idx = logits.argmax(-1).item()
-print("Predicted class:", model.config.id2label[predicted_class_idx])
+# outputs = model(**inputs)
+# logits = outputs.logits
+# # model predicts one of the 1000 ImageNet classes
+# predicted_class_idx = logits.argmax(-1).item()
+# print("Predicted class:", model.config.id2label[predicted_class_idx])
 
 
 print(model)
+
+for m in model.modules():
+    if isinstance(m, SwinSelfAttention):
+        print("prev - m.attention_head_size = ", m.attention_head_size)
+        print("prev - m.all_head_size = ", m.all_head_size)
+
+        print("attention_head_size =  query.out_features  //  num_attention_heads")
+        print(m.attention_head_size, "=", m.query.out_features, "//", m.num_attention_heads)
+        
+        print("m.all_head_size = m.query.out_features")
+        print(m.all_head_size, "=", m.query.out_features)
+
+        print()
+
+
 imp = tp.importance.MagnitudeImportance(p=2, group_reduction="mean")
 base_macs, base_params = tp.utils.count_ops_and_params(model, example_inputs)
+print("Base Macs: %f M, Base Params: %f M"%(base_macs/1e9, base_params/1e6))
+
 num_heads = {}
 
-ignored_layers = [model.classifier]
+# ignored_layers = [model.classifier]
+ignored_layers = []
 # All heads should be pruned simultaneously, so we group channels by head.
 for m in model.modules():
     if isinstance(m, SwinSelfAttention):
+        print("m.num_attention_heads === ", m.num_attention_heads)
         num_heads[m.query] = m.num_attention_heads
         num_heads[m.key] = m.num_attention_heads
         num_heads[m.value] = m.num_attention_heads
+
+# output_transform=lambda out: out.logits.sum()
+output_transform = None
 
 pruner = tp.pruner.MetaPruner(
                 model, 
@@ -64,25 +99,37 @@ pruner = tp.pruner.MetaPruner(
                 global_pruning=False, # If False, a uniform pruning ratio will be assigned to different layers.
                 importance=imp, # importance criterion for parameter selection
                 iterative_steps=1, # the number of iterations to achieve target pruning ratio
-                pruning_ratio=0.5,
+                pruning_ratio=0.25,
                 num_heads=num_heads,
-                output_transform=lambda out: out.logits.sum(),
+                output_transform=output_transform,
                 ignored_layers=ignored_layers,
                 customized_pruners={SwinPatchMerging: SwinPatchMergingPruner()},
                 root_module_types=(nn.Linear, nn.LayerNorm, SwinPatchMerging),
             )
 
 for g in pruner.step(interactive=True):
-    #print(g)
+    print(g)
     g.prune()
 
 print(model)
 
+
 # Modify the attention head size and all head size aftering pruning
 for m in model.modules():
     if isinstance(m, SwinSelfAttention):
+        print("prev - m.attention_head_size = ", m.attention_head_size)
+        print("prev - m.all_head_size = ", m.all_head_size)
         m.attention_head_size = m.query.out_features // m.num_attention_heads
         m.all_head_size = m.query.out_features
+
+
+        print("attention_head_size =  query.out_features  //  num_attention_heads")
+        print(m.attention_head_size, "=", m.query.out_features, "//", m.num_attention_heads)
+        
+        print("m.all_head_size = m.query.out_features")
+        print(m.all_head_size, "=", m.query.out_features)
+
+        print()
 
 test_output = model(example_inputs)
 pruned_macs, pruned_params = tp.utils.count_ops_and_params(model, example_inputs)
