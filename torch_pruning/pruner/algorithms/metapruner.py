@@ -112,9 +112,6 @@ class MetaPruner:
         self.prune_head_dims = prune_head_dims
         self.head_pruning_ratio = head_pruning_ratio
 
-        # Dependency Graph
-        self.DG = dependency.DependencyGraph()
-
         ###############################################
         # Ignored layers and submodules
         self.ignored_layers = []
@@ -125,16 +122,10 @@ class MetaPruner:
                     self.ignored_layers.extend(list(layer.modules()))
                 elif isinstance(layer, nn.Parameter):
                     self.ignored_params.append(layer)
-        
-        ###############################################
-        # Register customized layers with DependencyGraph.register_customized_layer
-        # self.DG.register_customized_layer(
-
-        # )
 
         ###############################################
         # Build dependency graph
-        self.DG = self.DG.build_dependency(
+        self.DG = dependency.DependencyGraph().build_dependency(
             model,
             example_inputs=example_inputs,
             forward_fn=forward_fn,

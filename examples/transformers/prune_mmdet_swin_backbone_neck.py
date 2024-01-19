@@ -14,30 +14,11 @@ import collections
 
 class WindowMSAPruner(tp.BasePruningFunc):
     def prune_out_channels(self, layer: nn.Module, idxs: list):
-        print("WindowMSAPruner prune_out_channels() / ", len(idxs))
-
         dim = layer.embed_dims
-        
-        print("WindowMSAPruner prune_out_channels/ dim = ", dim)
-        
-        print("\tlen indx = ", len(idxs))
-        
-        print("WindowMSAPruner - idxs = ", idxs)
-
-
         idxs_repeated = idxs + \
             [i+1*dim for i in idxs] + \
             [i+2*dim for i in idxs] + \
             [i+3*dim for i in idxs]
-
-        # idxs_repeated = idxs
-
-        print("\tidxs_repeated = ", len(idxs_repeated))
-
-        print("WindowMSAPruner - idxs_repeated = ", idxs_repeated)
-
-        print("WindowMSAPruner prune_out_channels idxs_repeated = ", len(idxs_repeated))
-
 
         tp.prune_linear_out_channels(layer.qkv, idxs_repeated)
         tp.prune_linear_out_channels(layer.proj, idxs)
@@ -45,70 +26,40 @@ class WindowMSAPruner(tp.BasePruningFunc):
         return layer
 
     def prune_in_channels(self, layer: nn.Module, idxs: Sequence[int]) -> nn.Module:
-        print("WindowMSAPruner prune_in_channels() / ", len(idxs))
-
-        dim = layer.embed_dims
-
-        idxs_repeated = idxs + \
-            [i+1*dim for i in idxs] + \
-            [i+2*dim for i in idxs] + \
-            [i+3*dim for i in idxs]
-
-        idxs_repeated = idxs
-
-        # tp.prune_linear_in_channels(layer, idxs)
-        tp.prune_linear_in_channels(layer.qkv, idxs_repeated)
+        tp.prune_linear_in_channels(layer.qkv, idxs)
         tp.prune_linear_in_channels(layer.proj, idxs)
         return layer
 
     def get_out_channels(self, layer):
-        print("WindowMSAPruner layer.embed_dims = ", layer.proj.out_features)
         return layer.embed_dims
 
     def get_in_channels(self, layer):
-        # num_heads = layer.num_heads
-        # embed_dims = layer.embed_dims
-        # head_embed_dims = embed_dims // num_heads
-
-        print("WindowMSAPruner layer.qkv.in_features = ", layer.qkv.in_features)
         return layer.embed_dims
 
 
 class PatchMergingPruner(tp.BasePruningFunc):
 
     def prune_out_channels(self, layer: nn.Module, idxs: list):
-        print("PatchMergingPruner () prune_out_channels/ ", layer.reduction.out_features, type(layer))
         tp.prune_linear_out_channels(layer.reduction, idxs)
         return layer
 
     def prune_in_channels(self, layer: nn.Module, idxs: Sequence[int]) -> nn.Module:
-        print("PatchMergingPruner () prune_in_channels/ ", layer.reduction.in_features, type(layer))
         dim = int(layer.reduction.in_features / 4)
-        
-        print("PatchMergingPruner () prune_in_channels/ dim = ", dim)
-        
-        print("len indx = ", len(idxs))
 
         idxs_repeated = idxs + \
             [i+dim for i in idxs] + \
             [i+2*dim for i in idxs] + \
             [i+3*dim for i in idxs]
 
-        print("idxs_repeated = ", len(idxs_repeated))
-
         tp.prune_linear_in_channels(layer.reduction, idxs_repeated)
         tp.prune_layernorm_out_channels(layer.norm, idxs_repeated)
         return layer
 
     def get_out_channels(self, layer):
-        print("PatchMergingPruner () get_out_channels/ ", layer.reduction.out_features, type(layer))
         return layer.reduction.out_features
 
     def get_in_channels(self, layer):
         in_dim = int(layer.reduction.in_features / 4)
-        
-        print("PatchMergingPruner () get_in_channels/ ", in_dim, type(layer))
-        
         return in_dim
 
 
@@ -186,8 +137,6 @@ ignored_layers = []
 # All heads should be pruned simultaneously, so we group channels by head.
 for m in model.backbone.modules():
     if isinstance(m, WindowMSA):
-        print("m.num_attention_heads === ", m.num_heads)
-        # num_heads[m.qkv] = m.num_heads
         num_heads[m.qkv] = m.num_heads
 
 # output_transform = lambda out: out.logits.sum()
@@ -212,7 +161,6 @@ pruner = tp.pruner.MetaPruner(
             )
 
 for g in pruner.step(interactive=True):
-    print("pruner.step", g)
     g.prune()
 
 print(model)
@@ -221,30 +169,13 @@ print(model)
 num_features = []
 for m in model.backbone.modules():
     if isinstance(m, WindowMSA):
-        print("- prev m.qkv.out_features = ", m.qkv.out_features)
-        print("- prev m.qkv.in_features = ", m.qkv.in_features)
-        print(" - prev m.num_heads = ", m.num_heads)
-        print(" - prev m.embed_dims = ", m.embed_dims)
-        
         if m.qkv.in_features not in num_features:
             num_features.append(m.qkv.in_features)
 
-        # m.embed_dims = m.qkv.in_features
-
-        # m.num_heads = m.qkv.in_features // 3
-
         head_embed_dims = m.embed_dims
         head_embed_dims = head_embed_dims // m.num_heads
-        print("head_embed_dims = ", head_embed_dims)
-        
-        print(m.scale, m.embed_dims)
-
         m.scale = head_embed_dims ** -0.5
-
         m.embed_dims = m.qkv.out_features
-        
-        print(" - after m.embed_dims = ", m.embed_dims)
-        print()
 
 for m in model.backbone.modules():
     if isinstance(m, SwinTransformer):

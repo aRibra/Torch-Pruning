@@ -349,15 +349,10 @@ class DependencyGraph(object):
                 if (m==layer_type_or_instance) or (not isinstance(layer_type_or_instance, torch.nn.Module) and isinstance(m, layer_type_or_instance)):
                     for sub_module in m.modules(): 
                         if sub_module != m:
-                            print("\t\t\tIGNORING: ", sub_module)
                             self.IGNORED_LAYERS_IN_TRACING.append(sub_module)
-        print("self.IGNORED_LAYERS_IN_TRACING = ", len(self.IGNORED_LAYERS_IN_TRACING), self.IGNORED_LAYERS_IN_TRACING)
 
         # Detect unwrapped nn.parameters that can not be handled by self.REGISTED_PRUNERS
         self._param_to_name, self.unwrapped_parameters = self._detect_unwrapped_parameters(unwrapped_parameters)
-        
-        # debug
-        print('self._param_to_name = ', self._param_to_name.values())
 
         # Detect torch.no_grad()
         assert torch.is_grad_enabled(), "Dependency graph relies on autograd for tracing. Please check and disable the torch.no_grad() in your code."
@@ -403,10 +398,7 @@ class DependencyGraph(object):
                 prunable_chs = self.get_out_channels(
                     dep.target.module)
                 if prunable_chs is None: continue
-                print("idxs = ", len(idxs))
-                print("prunable_chs = ", prunable_chs)
                 if prunable_chs <= len(idxs):
-                    print("\t\t False / prunable_chs <= len(idxs)")
                     return False
 
             if self.is_in_channel_pruning_fn(dep.handler):
@@ -514,23 +506,17 @@ class DependencyGraph(object):
         for m in list(self.module2node.keys()):
             
             if m in ignored_layers:
-                print("continue 1")
                 continue
 
             if not isinstance(m, tuple(root_module_types)):
-                print(type(m), "continue 2")
                 continue
 
             pruner = self.get_pruner_of_module(m)
             if pruner is None or pruner.get_out_channels(m) is None:
-                print("continue 3")
                 continue
 
             if m in visited_layers:
-                print("continue 4")
                 continue
-
-            print("\tget_all_groups -- Adding layer: ", type(m) )
 
             layer_channels = pruner.get_out_channels(m)
             group = self.get_pruning_group(
@@ -647,8 +633,6 @@ class DependencyGraph(object):
                 if p is p_wrapped:
                     is_wrapped = True
                     break
-            # debug
-            print(name, is_wrapped)
             if not is_wrapped:
                 unwrapped_detected.append(p)
                 _param_to_name[p] = name
@@ -722,8 +706,6 @@ class DependencyGraph(object):
             if isinstance(outputs, torch.nn.utils.rnn.PackedSequence):
                 outputs = outputs.data
 
-            print(f'_record_grad_fn {type(module)}, {outputs.requires_grad}, grad_fn: {outputs.grad_fn}')
-
             gradfn2module[outputs.grad_fn] = module
 
 
@@ -740,23 +722,15 @@ class DependencyGraph(object):
             if (isinstance(m, registered_types) and m not in self.IGNORED_LAYERS_IN_TRACING):
                 passed_set.append(type(m))
             else:
-                # print( "\t[Failed]", type(m) )
                 failed_set.append(type(m))
         passed_set = set(passed_set)
         failed_set = set(failed_set)
-
-        print( "[Passed]", passed_set )
-        print( "[Failed]", failed_set )
 
         hooks = [
             m.register_forward_hook(_record_grad_fn)
             for m in model.modules()
             if (isinstance(m, registered_types) and m not in self.IGNORED_LAYERS_IN_TRACING)
         ]
-        print("self.IGNORED_LAYERS_IN_TRACING = ", self.IGNORED_LAYERS_IN_TRACING)
-        print("registered_types = ", registered_types)
-        print("len hooks = ", len(hooks))
-        print("pre forward - gradfn2module = ", len(gradfn2module), gradfn2module.keys())
 
         # Feed forward to record gradient functions of prunable modules
         if forward_fn is not None:
@@ -776,34 +750,16 @@ class DependencyGraph(object):
         if output_transform is not None:
             out = output_transform(out)
 
-        print()
-        print("visited = ", visited)
-        print()
-
-        print()
-        print("reused = ", reused)
-        print()
-
         # Graph tracing
         module2node = {} # create a mapping from nn.Module to tp.dependency.Node
         visited = set()
         flattened_output = utils.flatten_as_list(out)
-
-        print("flattened_output = ", type(flattened_output[0]) )
-        print("flattened_output len = ", len(flattened_output) )
-        print("flattened_output shapes = ", [o.shape for o in flattened_output] )
-        print("grad_fn = ", [o.grad_fn for o in flattened_output] )
-        print("post forward - gradfn2module = ", len(gradfn2module), gradfn2module.keys())
-        
-        
 
         # First suspect the problem is in this for loop
         # should investigate: _trace_computational_graph()
         for o in flattened_output:
             self._trace_computational_graph(
                 module2node, o.grad_fn, gradfn2module, reused, visited=visited)
-
-        print("\n module2node == ", module2node.values(), '\n')
 
         # TODO: Improving ViT pruning
         # This is a corner case for pruning ViT,
