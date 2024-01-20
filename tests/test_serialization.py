@@ -29,7 +29,7 @@ def test_serialization():
         model.hidden_dim = model.conv_proj.out_channels
         true_hidden_dim = model.hidden_dim
         print(model.class_token.shape, model.encoder.pos_embedding.shape)
-    
+
     state_dict = tp.state_dict(model)
     torch.save(state_dict, 'test.pth')
 
@@ -39,7 +39,8 @@ def test_serialization():
 
     # load the pruned state_dict
     loaded_state_dict = torch.load('test.pth', map_location='cpu')
-    tp.load_state_dict(model, state_dict=loaded_state_dict)
+    tp.load_stat
+    e_dict(model, state_dict=loaded_state_dict)
     print(model)
 
     # test

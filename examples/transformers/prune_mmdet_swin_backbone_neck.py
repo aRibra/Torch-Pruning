@@ -66,7 +66,7 @@ class PatchMergingPruner(tp.BasePruningFunc):
 
 def load_model():
     gd_weights = "/mnt/disks/ext/exps/mini_coco/grounding_dino_swin-t_finetune_custom_dataset/E1/best_coco_bbox_mAP_epoch_2.pth"
-    model_cfg = "/mnt/disks/ext/repos/mmdetection/configs/grounding_dino/grounding_dino_swin-t_finetune_32xb1_1x_coco.py"
+    model_cfg = "/mnt/disks/ext/repos/mmdetection/configs/grounding_dino/grounding_dino_swin-t_finetune_1xb4_1x_coco.py"
     model = init_detector(model_cfg, gd_weights)
     model.eval().cpu()
     model.train()
@@ -143,7 +143,7 @@ for m in model.backbone.modules():
 output_transform = None
 
 # 0.5 or 0.25
-pruning_ratio = 0.5
+pruning_ratio = 0.25
 pruner = tp.pruner.MetaPruner(
                 model, 
                 example_inputs, 
@@ -207,3 +207,30 @@ save_as = f"/mnt/disks/ext/gd_checkpoints/gd_backbone_and_neck_sequential_Pruned
 model.zero_grad()
 torch.save(model, save_as)
 
+# BACKONE TP
+tp_save_as_state_dict_backbone = f"/mnt/disks/ext/gd_checkpoints/gd_backbone_Pruned_{int(pruning_ratio * 100)}_tp_state_dict.pth"
+tp_state_dict_backbone = tp.state_dict(model.backbone)
+torch.save(tp_state_dict_backbone, tp_save_as_state_dict_backbone)
+# BACKBONE PyTorch
+backbone_model = torch.nn.Sequential(
+    collections.OrderedDict([
+        ("backbone", model.backbone)
+    ])
+)
+torch_save_as_state_dict_backbone = f"/mnt/disks/ext/gd_checkpoints/gd_backbone_Pruned_{int(pruning_ratio * 100)}_torch_state_dict.pth"
+torch.save({"state_dict": backbone_model.state_dict()}, torch_save_as_state_dict_backbone)
+
+
+# NECK TP
+tp_save_as_state_dict_neck = f"/mnt/disks/ext/gd_checkpoints/gd_neck_Pruned_{int(pruning_ratio * 100)}_tp_state_dict.pth"
+tp_state_dict_neck = tp.state_dict(model.neck)
+torch.save(tp_state_dict_neck, tp_save_as_state_dict_neck)
+
+# NECK PyTorch
+neck_model = torch.nn.Sequential(
+    collections.OrderedDict([
+        ("neck", model.neck)
+    ])
+)
+torch_save_as_state_dict_neck = f"/mnt/disks/ext/gd_checkpoints/gd_neck_Pruned_{int(pruning_ratio * 100)}_torch_state_dict.pth"
+torch.save({"state_dict": neck_model.state_dict()}, torch_save_as_state_dict_neck)

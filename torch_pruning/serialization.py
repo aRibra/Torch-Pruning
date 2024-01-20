@@ -36,8 +36,10 @@ def load_state_dict(model: torch.nn.Module, state_dict: dict):
         # load state dicts
         if name in full_state_dict:
             module.__dict__.update(full_state_dict[name])
+            print('TP - load_state_dict - adding state:', name)
         # load attributes
         if name in attributions:
             for attr_name, attr_value in attributions[name].items():
                 setattr(module, attr_name, attr_value)
+            print('TP - load_state_dict - name attr:', name)
     return model
