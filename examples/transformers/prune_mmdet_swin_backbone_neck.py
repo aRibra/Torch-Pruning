@@ -143,7 +143,7 @@ for m in model.backbone.modules():
 output_transform = None
 
 # 0.5 or 0.25
-pruning_ratio = 0.25
+pruning_ratio = 0.5
 pruner = tp.pruner.MetaPruner(
                 model, 
                 example_inputs, 
@@ -151,6 +151,7 @@ pruner = tp.pruner.MetaPruner(
                 importance=imp, # importance criterion for parameter selection
                 iterative_steps=1, # the number of iterations to achieve target pruning ratio
                 pruning_ratio=pruning_ratio,
+                pruning_ratio_dict = {model.neck.convs: 0, model.neck.extra_convs: 0},
                 num_heads=num_heads,
                 prune_head_dims=False,
                 output_transform=output_transform,
