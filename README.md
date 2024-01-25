@@ -23,7 +23,7 @@
 
 Torch-Pruning (TP) is a library for structural pruning with the following features:
 
-* **General-purpose Pruning Toolkit:** TP enables structural pruning for a wide range of deep neural networks, including [Large Language Models (LLMs)](https://github.com/horseee/LLM-Pruner), [Diffusion Models](https://github.com/VainF/Diff-Pruning), [Yolov7](examples/yolov7/), [yolov8](examples/yolov8/), [Vision Transformers](examples/transformers/), [Swin Transformers](examples/transformers#swin-transformers-from-hf-transformers), [BERT](examples/transformers#bert-from-hf-transformers), FasterRCNN, SSD, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, DeepLab, etc. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning deploys an algorithm called **[DepGraph](https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html)** to remove parameters physically. 
+* **General-purpose Pruning Toolkit:** TP enables structural pruning for a wide range of deep neural networks, including [Large Language Models (LLMs)](https://github.com/horseee/LLM-Pruner), [Segment Anything Model (SAM)](https://github.com/czg1225/SlimSAM), [Diffusion Models](https://github.com/VainF/Diff-Pruning), [Yolov7](examples/yolov7/), [yolov8](examples/yolov8/), [Vision Transformers](examples/transformers/), [Swin Transformers](examples/transformers#swin-transformers-from-hf-transformers), [BERT](examples/transformers#bert-from-hf-transformers), FasterRCNN, SSD, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, DeepLab, etc. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning deploys an algorithm called **[DepGraph](https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html)** to remove parameters physically. 
 * **[Examples](examples)**: Pruning off-the-shelf models from Timm, Huggingface Transformers, Torchvision, Yolo, etc.  
 * **[Benchmark](benchmarks)**: Reproduce the our results in the DepGraph paper.
 
@@ -53,7 +53,7 @@ For more technical details, please refer to our CVPR'23 paper:
 ### **Contact Us:**
 Please do not hesitate to open an [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper.   
 Or Join our Discord or WeChat group for a chat:
-  * Discord: [link](https://discord.gg/Z6r34MnE)
+  * Discord: [link](https://discord.gg/EHxmWRgb)
   * WeChat Group (Group size exceeded 400): [QR Code](https://github.com/VainF/Torch-Pruning/assets/18592211/35d66130-eb03-4dcb-ad75-8df784460ad3)
 
 ## Table of Contents
@@ -301,8 +301,8 @@ torch.save(model, 'model.pth') # without .state_dict
 model = torch.load('model.pth') # load the pruned model
 ```
 
-#### Method 2:
-**Experimental Features**: Re-create pruned models from unpruned ones using ``tp.state_dict`` and ``tp.load_state_dict``.
+#### Method 2 (Experimental Features):
+Re-create pruned models from unpruned ones using ``tp.state_dict`` and ``tp.load_state_dict``.
 ```python
 # save the pruned state_dict, which includes both pruned parameters and modified attributes
 state_dict = tp.state_dict(pruned_model) # the pruned model, e.g., a resnet-18-half

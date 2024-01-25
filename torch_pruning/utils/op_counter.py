@@ -199,6 +199,12 @@ def rnn_cell_flops_counter_hook(rnn_cell_module, input, output):
 
 
 def multihead_attention_counter_hook(multihead_attention_module, input, output):
+    print("multihead_attention_module = ", multihead_attention_module)
+    print("input = ", input, len(input))
+    
+    # if len(input) == 0:
+    #     return
+
     flops = 0
     q, k, v = input
 
