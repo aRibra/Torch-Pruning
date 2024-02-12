@@ -1,3 +1,18 @@
+# Pruning Swin-T from `mmpretrain`
+
+### Training model
+Please refer to the following fork from mmpretrain: https://github.com/aRibra/mmpretrain
+
+### Command for pruning the model
+`python3 examples/transformers/prune_mmdet_swin_t.py`  
+  
+Specific the pruning ratio in the script: `pruning_ratio = 0.5` or `pruning_ratio = 0.25`.
+
+
+____
+____
+
+
 <br>
 <div align="center">
 <img src="https://user-images.githubusercontent.com/18592211/232830417-0b21a874-516e-4420-8984-4de414a35085.png" width="400px"></img>
