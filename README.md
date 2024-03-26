@@ -26,7 +26,7 @@ ____
   <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-1.8 %20%7C%201.12 %20%7C%202.0-673ab7.svg" alt="Tested PyTorch Versions"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-4caf50.svg" alt="License"></a>
   <a href="https://pepy.tech/project/Torch-Pruning"><img src="https://static.pepy.tech/badge/Torch-Pruning?color=2196f3" alt="Downloads"></a>
-  <a href="https://github.com/VainF/Torch-Pruning/releases/latest"><img src="https://img.shields.io/badge/Latest%20Version-1.3.6-3f51b5.svg" alt="Latest Version"></a>
+  <a href="https://github.com/VainF/Torch-Pruning/releases/latest"><img src="https://img.shields.io/badge/Latest%20Version-1.3.7-3f51b5.svg" alt="Latest Version"></a>
   <a href="https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
@@ -39,7 +39,7 @@ ____
 Torch-Pruning (TP) is a library for structural pruning with the following features:
 
 * **General-purpose Pruning Toolkit:** TP enables structural pruning for a wide range of deep neural networks, including [Large Language Models (LLMs)](https://github.com/horseee/LLM-Pruner), [Segment Anything Model (SAM)](https://github.com/czg1225/SlimSAM), [Diffusion Models](https://github.com/VainF/Diff-Pruning), [Yolov7](examples/yolov7/), [yolov8](examples/yolov8/), [Vision Transformers](examples/transformers/), [Swin Transformers](examples/transformers#swin-transformers-from-hf-transformers), [BERT](examples/transformers#bert-from-hf-transformers), FasterRCNN, SSD, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, DeepLab, etc. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning deploys an algorithm called **[DepGraph](https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html)** to remove parameters physically. 
-* **[Examples](examples)**: Pruning off-the-shelf models from Timm, Huggingface Transformers, Torchvision, Yolo, etc.  
+* **[Examples](examples)**: Pruning off-the-shelf models from Timm, Huggingface Transformers, Torchvision, Yolo, etc. 
 * **[Benchmark](benchmarks)**: Reproduce the our results in the DepGraph paper.
 
 For more technical details, please refer to our CVPR'23 paper:
@@ -68,8 +68,8 @@ For more technical details, please refer to our CVPR'23 paper:
 ### **Contact Us:**
 Please do not hesitate to open an [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper.   
 Or Join our Discord or WeChat group for a chat:
-  * Discord: [link](https://discord.gg/EHxmWRgb)
-  * WeChat Group (Group size exceeded 400): [QR Code](https://github.com/VainF/Torch-Pruning/assets/18592211/35d66130-eb03-4dcb-ad75-8df784460ad3)
+  * Discord: [link](https://discord.gg/Pvd6hbYXRs)
+  * WeChat Group [Group 1 (500/500, FULL)](https://github.com/VainF/Torch-Pruning/assets/18592211/35d66130-eb03-4dcb-ad75-8df784460ad3), [Group-2](https://github.com/VainF/Torch-Pruning/assets/18592211/35e279a1-1d5f-43d1-a893-1d94056dd984)
 
 ## Table of Contents
 - [Installation](#installation)
@@ -439,7 +439,7 @@ Please refer to [benchmarks](benchmarks) for more details.
 
 > **DeepCache: Accelerating Diffusion Models for Free** [[Project]](https://github.com/horseee/DeepCache) [[Arxiv]](https://arxiv.org/abs/2312.00858)  
 > *Xinyin Ma, Gongfan Fang, and Xinchao Wang*   
-> Preprint 2023
+> CVPR 2024
 
 > **0.1% Data Makes Segment Anything Slim** [[Project]](https://github.com/czg1225/SlimSAM) [[Arxiv]](https://arxiv.org/abs/2312.05284)    
 > *Zigeng Chen, Gongfan Fang, Xinyin Ma, Xinchao Wang*   

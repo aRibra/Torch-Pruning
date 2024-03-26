@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import typing, warnings
 
+from torch_pruning.pruner.importance import OBDCImportance
+
 from .scheduler import linear_scheduler
 from ..import function
 from ... import ops, dependency
@@ -33,6 +35,7 @@ class MetaPruner:
             * prune_num_heads (bool): remove entire heads in multi-head attention. Default: False.
             * prune_head_dims (bool): remove head dimensions in multi-head attention. Default: True.
             * head_pruning_ratio (float): head pruning ratio. Default: 0.0.
+            * head_pruning_ratio_dict (Dict[nn.Module, float]): layer-specific head pruning ratio. Default: None.
             * customized_pruners (dict): a dict containing module-pruner pairs. Default: None.
             * unwrapped_parameters (dict): a dict containing unwrapped parameters & pruning dims. Default: None.
             * root_module_types (list): types of prunable modules. Default: [nn.Conv2d, nn.Linear, nn.LSTM].
@@ -226,6 +229,23 @@ class MetaPruner:
         else:
             for group in pruning_method():
                 group.prune()
+                # print("gg")
+            # exit(0)
+
+    def manual_prune(self, layer, pruning_fn, pruning_ratios_or_idxs):
+        if isinstance(pruning_ratios_or_idxs, float):
+            if self.DG.is_out_channel_pruning_fn(pruning_fn):
+                prunable_channels = self.DG.get_out_channels(layer)
+            else:
+                prunable_channels = self.DG.get_in_channels(layer)
+            full_group = self.DG.get_pruning_group(layer, pruning_fn, list(range(prunable_channels)))
+            imp = self.estimate_importance(full_group)
+            imp_argsort = torch.argsort(imp)
+            n_pruned = int(prunable_channels * (1 - pruning_ratios_or_idxs))
+            pruning_idxs = imp_argsort[:n_pruned]
+ 
+        group = self.DG.get_pruning_group(layer, pruning_fn, pruning_idxs)
+        group.prune()
 
     def estimate_importance(self, group) -> torch.Tensor:
         return self.importance(group)
@@ -333,7 +353,6 @@ class MetaPruner:
         if self.current_step > self.iterative_steps:
             warnings.warn("Pruning exceed the maximum iterative steps, no pruning will be performed.")
             return
-        
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
             if self._check_pruning_ratio(group): # check pruning ratio
                 ##################################
@@ -400,6 +419,9 @@ class MetaPruner:
 
                 if len(pruning_idxs)==0: continue
                 pruning_idxs = torch.unique( torch.cat(pruning_idxs, 0) ).tolist()
+                if isinstance(self.importance, OBDCImportance):
+                    self.importance.adjust_fisher(group, pruning_idxs)
+
                 group = self.DG.get_pruning_group(
                     module, pruning_fn, pruning_idxs)
                 
@@ -529,6 +551,8 @@ class MetaPruner:
             
             if len(pruning_indices)==0: continue
             pruning_indices = torch.unique(torch.cat(pruning_indices, 0)).tolist()
+            if isinstance(self.importance, OBDCImportance):
+                    self.importance.adjust_fisher(group, pruning_indices)
             # create pruning group
             group = self.DG.get_pruning_group(
                 module, pruning_fn, pruning_indices)
