@@ -6,7 +6,7 @@ Please refer to the following fork from mmpretrain: https://github.com/aRibra/mm
 ### Command for pruning the model
 `python3 examples/transformers/prune_mmdet_swin_t.py`  
   
-Specific the pruning ratio in the script: `pruning_ratio = 0.5` or `pruning_ratio = 0.25`.
+Specify the pruning ratio in the script: `pruning_ratio = 0.5` or `pruning_ratio = 0.25`.
 
 
 ____
