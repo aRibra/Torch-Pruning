@@ -1,5 +1,7 @@
 # Pruning Swin-T from `mmpretrain`
 
+__Paper__: "*Optimizing Neural Networks for Edge Devices via Structural Pruning: An Empirical Study with DepGraph*"
+
 ### Training model
 Please refer to the following fork from mmpretrain: https://github.com/aRibra/mmpretrain
 
